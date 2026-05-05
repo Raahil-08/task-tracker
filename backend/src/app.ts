@@ -4,6 +4,7 @@ import helmet from "helmet";
 import authRoutes from "./routes/auth.routes";
 import taskRoutes from "./routes/task.routes";
 import { errorHandler } from "./middleware/errorHandler";
+import morgan from "morgan";
 
 const app = express();
 
@@ -24,6 +25,9 @@ app.use(express.json());
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+// after other middleware, before routes
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 // API routes
 app.use("/api/auth", authRoutes);
