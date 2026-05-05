@@ -1,0 +1,102 @@
+@baseUrl = https://task-tracker-x81b.onrender.com/api
+### Health
+GET {{baseUrl}}/health
+
+### Signup
+# @name signup
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Raahil Desai",
+  "email": "raahil@example.com",
+  "password": "password123"
+}
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "raahil@example.com",
+  "password": "password123"
+}
+
+### Login (wrong password - should 401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "raahil@example.com",
+  "password": "wrongpassword"
+}
+
+### Signup (duplicate email - should 409)
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Raahil Desai",
+  "email": "raahil@example.com",
+  "password": "password123"
+}
+
+### Get tasks
+GET {{baseUrl}}/tasks
+Authorization: Bearer {{login.response.body.token}}
+
+### Create task
+# @name createTask
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "title": "Build the backend API",
+  "description": "Set up Express + TypeScript + MongoDB"
+}
+
+### Create task (title only)
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "title": "Review pull request"
+}
+
+### Create task (empty title - should 400)
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "title": ""
+}
+
+### Update task (mark complete)
+PATCH {{baseUrl}}/tasks/{{createTask.response.body.task.id}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "completed": true
+}
+
+### Update task (change title)
+PATCH {{baseUrl}}/tasks/{{createTask.response.body.task.id}}
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "title": "Updated task title",
+  "description": "Updated description"
+}
+
+### Delete task
+DELETE {{baseUrl}}/tasks/{{createTask.response.body.task.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### Get tasks without auth (should 401)
+GET {{baseUrl}}/tasks
