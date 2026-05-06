@@ -9,6 +9,8 @@ export interface Task {
   title: string;
   description?: string;
   completed: boolean;
+  priority: 'Low' | 'Medium' | 'High';
+  dueDate?: string;
   createdAt: string;
   updatedAt: string;
 }

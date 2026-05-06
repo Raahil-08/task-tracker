@@ -1,36 +1,37 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
-  FlatList,
+  SectionList,
   RefreshControl,
   SafeAreaView,
   StyleSheet,
   Text,
   View,
+  Pressable,
 } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { AddTaskModal } from '../../components/AddTaskModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorState } from '../../components/ErrorState';
 import { LoadingState } from '../../components/LoadingState';
-import { PrimaryButton } from '../../components/PrimaryButton';
 import { TaskItem } from '../../components/TaskItem';
-import { useAuthSession } from '../../lib/AuthProvider';
 import { useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../../lib/hooks/useTasks';
 import { Task } from '../../types/api';
 
 export default function TasksScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
-  const { signOut } = useAuthSession();
   const tasksQuery = useTasks();
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
 
-  const handleAddTask = async (title: string, description: string) => {
+  const handleAddTask = async (title: string, description: string, priority?: string, dueDate?: string) => {
     await createTaskMutation.mutateAsync({
       title,
       description: description || undefined,
+      priority: priority as any,
+      dueDate,
     });
     setShowAddModal(false);
   };
@@ -57,6 +58,70 @@ export default function TasksScreen() {
     }
   };
 
+  const tasks = tasksQuery.data ?? [];
+
+  const sections = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const dayAfterTomorrowStart = new Date(todayStart);
+    dayAfterTomorrowStart.setDate(dayAfterTomorrowStart.getDate() + 2);
+
+    const overdue: Task[] = [];
+    const today: Task[] = [];
+    const tomorrow: Task[] = [];
+    const upcoming: Task[] = [];
+    const noDate: Task[] = [];
+    const completed: Task[] = [];
+
+    tasks.forEach(t => {
+      if (t.completed) {
+        completed.push(t);
+        return;
+      }
+      if (!t.dueDate) {
+        noDate.push(t);
+        return;
+      }
+      const d = new Date(t.dueDate);
+      if (d < todayStart) overdue.push(t);
+      else if (d >= todayStart && d < tomorrowStart) today.push(t);
+      else if (d >= tomorrowStart && d < dayAfterTomorrowStart) tomorrow.push(t);
+      else upcoming.push(t);
+    });
+
+    const prioritySort = (a: Task, b: Task) => {
+      const pMap = { High: 3, Medium: 2, Low: 1 };
+      const pA = pMap[a.priority as keyof typeof pMap] || 0;
+      const pB = pMap[b.priority as keyof typeof pMap] || 0;
+      return pB - pA;
+    };
+
+    const sortFn = (a: Task, b: Task) => {
+      const p = prioritySort(a, b);
+      if (p !== 0) return p;
+      if (!a.dueDate || !b.dueDate) return 0;
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    };
+
+    overdue.sort(sortFn);
+    today.sort(sortFn);
+    tomorrow.sort(sortFn);
+    upcoming.sort(sortFn);
+    noDate.sort(sortFn);
+
+    const result = [];
+    if (overdue.length) result.push({ title: 'Overdue', data: overdue });
+    if (today.length) result.push({ title: 'Today', data: today });
+    if (tomorrow.length) result.push({ title: 'Tomorrow', data: tomorrow });
+    if (upcoming.length) result.push({ title: 'Upcoming', data: upcoming });
+    if (noDate.length) result.push({ title: 'No Deadline', data: noDate });
+    if (completed.length) result.push({ title: 'Completed', data: completed });
+
+    return result;
+  }, [tasks]);
+
   if (tasksQuery.isLoading) {
     return <LoadingState />;
   }
@@ -65,38 +130,43 @@ export default function TasksScreen() {
     return <ErrorState message={tasksQuery.error.message} onRetry={tasksQuery.refetch} />;
   }
 
-  const tasks = tasksQuery.data ?? [];
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Tasks</Text>
-        <View style={styles.headerActions}>
-          <PressableText text="+ Add" onPress={() => setShowAddModal(true)} />
-          <PressableText text="Logout" onPress={signOut} />
-        </View>
+        <FontAwesome5 name="bars" size={20} color="#2563eb" />
+        <Text style={styles.headerTitle}>Task Tracker</Text>
+        <FontAwesome5 name="user-circle" size={24} color="#2563eb" />
       </View>
 
-      {tasks.length === 0 ? (
-        <EmptyState onAddTask={() => setShowAddModal(true)} />
-      ) : (
-        <FlatList
-          data={tasks}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TaskItem
-              task={item}
-              onToggle={handleToggleTask}
-              onDelete={handleDeleteTask}
-              disabled={updateTaskMutation.isPending || deleteTaskMutation.isPending}
-            />
-          )}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={tasksQuery.isRefetching} onRefresh={tasksQuery.refetch} />
-          }
-        />
-      )}
+      <View style={{ flex: 1 }}>
+        {tasks.length === 0 ? (
+          <EmptyState onAddTask={() => setShowAddModal(true)} />
+        ) : (
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={tasksQuery.isRefetching} onRefresh={tasksQuery.refetch} />
+            }
+            renderSectionHeader={({ section: { title } }) => (
+              <Text style={styles.sectionTitle}>{title}</Text>
+            )}
+            renderItem={({ item }) => (
+              <TaskItem
+                task={item}
+                onToggle={handleToggleTask}
+                onDelete={handleDeleteTask}
+                disabled={updateTaskMutation.isPending || deleteTaskMutation.isPending}
+              />
+            )}
+          />
+        )}
+      </View>
+
+      <Pressable style={styles.fab} onPress={() => setShowAddModal(true)}>
+        <FontAwesome5 name="plus" size={20} color="#ffffff" />
+      </Pressable>
 
       <AddTaskModal
         visible={showAddModal}
@@ -114,51 +184,51 @@ export default function TasksScreen() {
         onConfirm={confirmDelete}
         onCancel={() => setTaskToDelete(null)}
       />
-
-      {!!(createTaskMutation.error || deleteTaskMutation.error) && (
-        <View style={styles.footerError}>
-          <Text style={styles.errorText}>
-            {createTaskMutation.error?.message ?? deleteTaskMutation.error?.message}
-          </Text>
-          <PrimaryButton title="Try again" variant="secondary" onPress={() => {
-            if (createTaskMutation.error) {
-              setShowAddModal(true);
-            } else {
-              tasksQuery.refetch();
-            }
-          }} />
-        </View>
-      )}
     </SafeAreaView>
   );
 }
 
-function PressableText({ text, onPress }: { text: string; onPress: () => void | Promise<void> }) {
-  return (
-    <Text style={styles.actionText} onPress={onPress}>
-      {text}
-    </Text>
-  );
-}
-
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#ffffff' },
+  safeArea: { flex: 1, backgroundColor: '#f9fafb' },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 8,
+    paddingBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
-  headerActions: { flexDirection: 'row', gap: 14 },
-  title: { fontSize: 28, fontWeight: '700', color: '#111111' },
-  actionText: { color: '#2563eb', fontWeight: '600', fontSize: 15 },
-  listContent: { paddingTop: 8, paddingBottom: 24 },
-  footerError: {
+  headerTitle: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 18,
+    color: '#2563eb',
+  },
+  sectionTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 12,
+    marginTop: 8,
     paddingHorizontal: 16,
-    paddingBottom: 8,
-    gap: 8,
   },
-  errorText: { color: '#dc2626', fontSize: 13, textAlign: 'center' },
+  listContent: { paddingTop: 8, paddingBottom: 80, paddingHorizontal: 16 },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
 });

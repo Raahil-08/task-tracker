@@ -6,6 +6,8 @@ import { ApiError, Task, TaskResponse, TasksResponse } from '../../types/api';
 interface CreateTaskInput {
   title: string;
   description?: string;
+  priority?: 'Low' | 'Medium' | 'High';
+  dueDate?: string;
 }
 
 interface UpdateTaskInput {
@@ -13,6 +15,8 @@ interface UpdateTaskInput {
   title?: string;
   description?: string;
   completed?: boolean;
+  priority?: 'Low' | 'Medium' | 'High';
+  dueDate?: string | null;
 }
 
 function getErrorMessage(error: unknown): string {

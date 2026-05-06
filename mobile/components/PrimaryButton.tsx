@@ -37,7 +37,7 @@ export function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 10,
+    borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -49,17 +49,17 @@ const styles = StyleSheet.create({
   secondary: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#2563eb',
+    borderColor: '#e5e7eb',
   },
   disabled: {
     opacity: 0.6,
   },
   text: {
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
   },
   secondaryText: {
-    color: '#2563eb',
+    color: '#111827',
   },
 });

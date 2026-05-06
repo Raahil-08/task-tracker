@@ -9,6 +9,8 @@ export const createTaskSchema = z.object({
     .string()
     .max(1000, "Description must be at most 1000 characters")
     .optional(),
+  priority: z.enum(["Low", "Medium", "High"]).optional(),
+  dueDate: z.coerce.date().optional(),
 });
 
 export const updateTaskSchema = z
@@ -23,12 +25,16 @@ export const updateTaskSchema = z
       .max(1000, "Description must be at most 1000 characters")
       .optional(),
     completed: z.boolean().optional(),
+    priority: z.enum(["Low", "Medium", "High"]).optional(),
+    dueDate: z.coerce.date().nullable().optional(),
   })
   .refine(
     (data) =>
       data.title !== undefined ||
       data.description !== undefined ||
-      data.completed !== undefined,
+      data.completed !== undefined ||
+      data.priority !== undefined ||
+      data.dueDate !== undefined,
     { message: "At least one field must be provided" }
   );
 

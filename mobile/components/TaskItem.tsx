@@ -1,37 +1,47 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { Task } from '../types/api';
 
 interface TaskItemProps {
   task: Task;
   onToggle: (task: Task) => void;
-  onDelete: (task: Task) => void;
+  onDelete?: (task: Task) => void;
+  onPress?: (task: Task) => void;
   disabled?: boolean;
 }
 
-export function TaskItem({ task, onToggle, onDelete, disabled = false }: TaskItemProps) {
+export function TaskItem({ task, onToggle, onDelete, onPress, disabled = false }: TaskItemProps) {
+  // Use either the real due date or a fallback text if not present, based on design
+  const timeText = task.dueDate ? new Date(task.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No time set';
+  
+  const isHigh = task.priority === 'High';
+  const priorityColor = isHigh ? '#dc2626' : (task.priority === 'Medium' ? '#2563eb' : '#6b7280');
+
   return (
-    <View style={styles.row}>
+    <Pressable style={styles.row} onPress={() => onPress && onPress(task)} disabled={disabled}>
       <Pressable
         style={[styles.checkbox, task.completed && styles.checkboxChecked]}
         onPress={() => onToggle(task)}
         disabled={disabled}
       >
-        {task.completed ? <Text style={styles.check}>✓</Text> : null}
+        {task.completed ? <FontAwesome5 name="check" size={10} color="#ffffff" /> : null}
       </Pressable>
 
       <View style={styles.content}>
         <Text style={[styles.title, task.completed && styles.completedTitle]}>{task.title}</Text>
-        {!!task.description && (
-          <Text style={[styles.description, task.completed && styles.completedDescription]}>
-            {task.description}
-          </Text>
-        )}
+        <View style={styles.timeRow}>
+          <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
+          <FontAwesome5 name="clock" size={12} color="#6b7280" style={{ marginLeft: 4 }} />
+          <Text style={styles.timeText}>{timeText}</Text>
+        </View>
       </View>
 
-      <Pressable onPress={() => onDelete(task)} disabled={disabled} style={styles.deleteButton}>
-        <Text style={styles.deleteText}>🗑</Text>
-      </Pressable>
-    </View>
+      {onDelete && (
+        <Pressable onPress={() => onDelete(task)} disabled={disabled} style={styles.actionButton}>
+          <FontAwesome5 name="trash-alt" size={16} color="#6b7280" />
+        </Pressable>
+      )}
+    </Pressable>
   );
 }
 
@@ -44,51 +54,52 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 12,
-    padding: 12,
-    marginHorizontal: 16,
-    marginBottom: 10,
+    padding: 16,
+    marginBottom: 12,
   },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+    width: 20,
+    height: 20,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#6b7280',
+    borderColor: '#d1d5db',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#ffffff',
   },
   checkboxChecked: {
     borderColor: '#2563eb',
     backgroundColor: '#2563eb',
-  },
-  check: {
-    color: '#ffffff',
-    fontWeight: '700',
   },
   content: {
     flex: 1,
     gap: 4,
   },
   title: {
-    color: '#111111',
+    color: '#111827',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  description: {
-    color: '#6b7280',
-    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
   },
   completedTitle: {
     textDecorationLine: 'line-through',
     color: '#6b7280',
   },
-  completedDescription: {
-    color: '#9ca3af',
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  deleteButton: {
-    padding: 4,
+  timeText: {
+    color: '#6b7280',
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
   },
-  deleteText: {
-    fontSize: 16,
+  priorityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  actionButton: {
+    padding: 8,
   },
 });
