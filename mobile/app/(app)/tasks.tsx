@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Alert,
   FlatList,
   RefreshControl,
   SafeAreaView,
@@ -9,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { AddTaskModal } from '../../components/AddTaskModal';
+import { ConfirmModal } from '../../components/ConfirmModal';
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorState } from '../../components/ErrorState';
 import { LoadingState } from '../../components/LoadingState';
@@ -20,6 +20,7 @@ import { Task } from '../../types/api';
 
 export default function TasksScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const { signOut } = useAuthSession();
   const tasksQuery = useTasks();
   const createTaskMutation = useCreateTask();
@@ -42,16 +43,18 @@ export default function TasksScreen() {
   };
 
   const handleDeleteTask = (task: Task) => {
-    Alert.alert('Delete task', 'Are you sure you want to delete this task?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteTaskMutation.mutateAsync(task.id);
-        },
-      },
-    ]);
+    setTaskToDelete(task);
+  };
+
+  const confirmDelete = async () => {
+    if (!taskToDelete) return;
+    try {
+      await deleteTaskMutation.mutateAsync(taskToDelete.id);
+    } catch {
+      // error is surfaced via deleteTaskMutation.error in the footer
+    } finally {
+      setTaskToDelete(null);
+    }
   };
 
   if (tasksQuery.isLoading) {
@@ -102,10 +105,28 @@ export default function TasksScreen() {
         onSubmit={handleAddTask}
       />
 
-      {!!createTaskMutation.error && (
+      <ConfirmModal
+        visible={taskToDelete !== null}
+        title="Delete task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        confirmLabel="Delete"
+        loading={deleteTaskMutation.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setTaskToDelete(null)}
+      />
+
+      {!!(createTaskMutation.error || deleteTaskMutation.error) && (
         <View style={styles.footerError}>
-          <Text style={styles.errorText}>{createTaskMutation.error.message}</Text>
-          <PrimaryButton title="Try again" variant="secondary" onPress={() => setShowAddModal(true)} />
+          <Text style={styles.errorText}>
+            {createTaskMutation.error?.message ?? deleteTaskMutation.error?.message}
+          </Text>
+          <PrimaryButton title="Try again" variant="secondary" onPress={() => {
+            if (createTaskMutation.error) {
+              setShowAddModal(true);
+            } else {
+              tasksQuery.refetch();
+            }
+          }} />
         </View>
       )}
     </SafeAreaView>
