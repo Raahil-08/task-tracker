@@ -1,4 +1,7 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, Animated } from 'react-native';
+import { useRef } from 'react';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface PrimaryButtonProps {
   title: string;
@@ -16,14 +19,33 @@ export function PrimaryButton({
   variant = 'primary',
 }: PrimaryButtonProps) {
   const isDisabled = disabled || loading;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={isDisabled}
       style={[
         styles.button,
         variant === 'secondary' ? styles.secondary : styles.primary,
         isDisabled && styles.disabled,
+        { transform: [{ scale }] },
       ]}
     >
       {loading ? (
@@ -31,7 +53,7 @@ export function PrimaryButton({
       ) : (
         <Text style={[styles.text, variant === 'secondary' && styles.secondaryText]}>{title}</Text>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   SectionList,
   RefreshControl,
@@ -7,19 +7,29 @@ import {
   Text,
   View,
   Pressable,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { AddTaskModal } from '../../components/AddTaskModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { EmptyState } from '../../components/EmptyState';
 import { ErrorState } from '../../components/ErrorState';
 import { LoadingState } from '../../components/LoadingState';
 import { TaskItem } from '../../components/TaskItem';
 import { useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../../lib/hooks/useTasks';
+import { useAuthSession } from '../../lib/AuthProvider';
 import { Task } from '../../types/api';
 
 export default function TasksScreen() {
+  const { signOut } = useAuthSession();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const tasksQuery = useTasks();
   const createTaskMutation = useCreateTask();
@@ -59,6 +69,10 @@ export default function TasksScreen() {
   };
 
   const tasks = tasksQuery.data ?? [];
+
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [tasks.length]);
 
   const sections = useMemo(() => {
     const now = new Date();
@@ -135,7 +149,9 @@ export default function TasksScreen() {
       <View style={styles.header}>
         <FontAwesome5 name="bars" size={20} color="#2563eb" />
         <Text style={styles.headerTitle}>Task Tracker</Text>
-        <FontAwesome5 name="user-circle" size={24} color="#2563eb" />
+        <Pressable onPress={() => setShowLogoutConfirm(true)}>
+          <FontAwesome5 name="user-circle" size={24} color="#2563eb" />
+        </Pressable>
       </View>
 
       <View style={{ flex: 1 }}>
@@ -183,6 +199,15 @@ export default function TasksScreen() {
         loading={deleteTaskMutation.isPending}
         onConfirm={confirmDelete}
         onCancel={() => setTaskToDelete(null)}
+      />
+
+      <ConfirmModal
+        visible={showLogoutConfirm}
+        title="Log Out"
+        message="Are you sure you want to log out of your account?"
+        confirmLabel="Log Out"
+        onConfirm={signOut}
+        onCancel={() => setShowLogoutConfirm(false)}
       />
     </SafeAreaView>
   );

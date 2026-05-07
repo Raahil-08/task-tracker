@@ -1,11 +1,15 @@
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useAuthSession } from '../../lib/AuthProvider';
 import { useTasks } from '../../lib/hooks/useTasks';
 import { LoadingState } from '../../components/LoadingState';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export default function DashboardScreen() {
+  const { signOut } = useAuthSession();
   const { data: tasks, isLoading } = useTasks();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   if (isLoading) {
     return <LoadingState />;
@@ -22,7 +26,9 @@ export default function DashboardScreen() {
         <View style={styles.header}>
           <FontAwesome5 name="bars" size={20} color="#2563eb" />
           <Text style={styles.headerTitle}>Task Tracker</Text>
-          <FontAwesome5 name="user-circle" size={24} color="#2563eb" />
+          <Pressable onPress={() => setShowLogoutConfirm(true)}>
+            <FontAwesome5 name="user-circle" size={24} color="#2563eb" />
+          </Pressable>
         </View>
 
         <View style={styles.greetingSection}>
@@ -122,6 +128,15 @@ export default function DashboardScreen() {
           )}
         </View>
       </ScrollView>
+
+      <ConfirmModal
+        visible={showLogoutConfirm}
+        title="Log Out"
+        message="Are you sure you want to log out of your account?"
+        confirmLabel="Log Out"
+        onConfirm={signOut}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </SafeAreaView>
   );
 }
