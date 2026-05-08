@@ -1,8 +1,9 @@
 import { Pressable, StyleSheet, Text, View, Animated } from 'react-native';
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { FontAwesome5 } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Task } from '../types/api';
+import { useTheme } from '../lib/ThemeContext';
 
 interface TaskItemProps {
   task: Task;
@@ -15,9 +16,12 @@ interface TaskItemProps {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function TaskItem({ task, onToggle, onDelete, onPress, disabled = false }: TaskItemProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const timeText = task.dueDate ? new Date(task.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No time set';
   const isHigh = task.priority === 'High';
-  const priorityColor = isHigh ? '#dc2626' : (task.priority === 'Medium' ? '#2563eb' : '#6b7280');
+  const priorityColor = isHigh ? colors.error : (task.priority === 'Medium' ? colors.primary : colors.secondary);
 
   const checkScale = useRef(new Animated.Value(1)).current;
 
@@ -33,7 +37,7 @@ export function TaskItem({ task, onToggle, onDelete, onPress, disabled = false }
     if (!onDelete) return null;
     return (
       <Pressable onPress={() => onDelete(task)} style={styles.deleteAction}>
-        <FontAwesome5 name="trash-alt" size={20} color="#ffffff" />
+        <FontAwesome5 name="trash-alt" size={20} color={colors.onPrimary} />
       </Pressable>
     );
   };
@@ -47,14 +51,14 @@ export function TaskItem({ task, onToggle, onDelete, onPress, disabled = false }
             onPress={handleToggle}
             disabled={disabled}
           >
-            {task.completed ? <FontAwesome5 name="check" size={10} color="#ffffff" /> : null}
+            {task.completed ? <FontAwesome5 name="check" size={10} color={colors.onPrimary} /> : null}
           </AnimatedPressable>
 
           <View style={styles.content}>
             <Text style={[styles.title, task.completed && styles.completedTitle]}>{task.title}</Text>
             <View style={styles.timeRow}>
               <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
-              <FontAwesome5 name="clock" size={12} color="#6b7280" style={{ marginLeft: 4 }} />
+              <FontAwesome5 name="clock" size={12} color={colors.onSurfaceVariant} style={{ marginLeft: 4 }} />
               <Text style={styles.timeText}>{timeText}</Text>
             </View>
           </View>
@@ -64,17 +68,17 @@ export function TaskItem({ task, onToggle, onDelete, onPress, disabled = false }
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     marginBottom: 12,
   },
   swipeableContainer: {
     borderRadius: 12,
-    backgroundColor: '#dc2626', // Red background behind swipeable
+    backgroundColor: colors.error, 
   },
   deleteAction: {
     width: 64,
-    backgroundColor: '#dc2626',
+    backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
     borderTopRightRadius: 12,
@@ -84,9 +88,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.outline,
     borderRadius: 12,
     padding: 16,
   },
@@ -95,27 +99,27 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.outline,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
   },
   checkboxChecked: {
-    borderColor: '#2563eb',
-    backgroundColor: '#2563eb',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
   },
   content: {
     flex: 1,
     gap: 4,
   },
   title: {
-    color: '#111827',
+    color: colors.onSurface,
     fontSize: 16,
     fontFamily: 'Inter_600SemiBold',
   },
   completedTitle: {
     textDecorationLine: 'line-through',
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
   },
   timeRow: {
     flexDirection: 'row',
@@ -123,7 +127,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   timeText: {
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
   },

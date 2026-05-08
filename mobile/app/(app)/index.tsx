@@ -1,15 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useAuthSession } from '../../lib/AuthProvider';
 import { useTasks } from '../../lib/hooks/useTasks';
+import { useTheme } from '../../lib/ThemeContext';
 import { LoadingState } from '../../components/LoadingState';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { TaskDetailsModal } from '../../components/TaskDetailsModal';
+import { Task } from '../../types/api';
 
 export default function DashboardScreen() {
   const { signOut } = useAuthSession();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: tasks, isLoading } = useTasks();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   if (isLoading) {
     return <LoadingState />;
@@ -24,10 +30,9 @@ export default function DashboardScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <FontAwesome5 name="bars" size={20} color="#2563eb" />
           <Text style={styles.headerTitle}>Task Tracker</Text>
           <Pressable onPress={() => setShowLogoutConfirm(true)}>
-            <FontAwesome5 name="user-circle" size={24} color="#2563eb" />
+            <FontAwesome5 name="user-circle" size={24} color={colors.primary} />
           </Pressable>
         </View>
 
@@ -56,26 +61,26 @@ export default function DashboardScreen() {
 
         <View style={styles.grid}>
           <View style={styles.gridCard}>
-            <FontAwesome5 name="tasks" size={16} color="#2563eb" style={styles.gridIcon} />
+            <FontAwesome5 name="tasks" size={16} color={colors.primary} style={styles.gridIcon} />
             <Text style={styles.gridLabel}>Total Tasks</Text>
             <Text style={styles.gridValue}>{totalTasks}</Text>
           </View>
           <View style={styles.gridCard}>
-            <FontAwesome5 name="exclamation-square" size={16} color="#dc2626" style={styles.gridIcon} />
+            <FontAwesome5 name="exclamation-triangle" size={16} color={colors.error} style={styles.gridIcon} />
             <Text style={styles.gridLabel}>Overdue</Text>
-            <Text style={[styles.gridValue, { color: '#dc2626' }]}>
+            <Text style={[styles.gridValue, { color: colors.error }]}>
               {tasks?.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) < new Date()).length || 0}
             </Text>
           </View>
           <View style={styles.gridCard}>
-            <FontAwesome5 name="fire" size={16} color="#bc4b00" style={styles.gridIcon} />
+            <FontAwesome5 name="fire" size={16} color={colors.tertiary} style={styles.gridIcon} />
             <Text style={styles.gridLabel}>High Priority</Text>
-            <Text style={[styles.gridValue, { color: '#bc4b00' }]}>
+            <Text style={[styles.gridValue, { color: colors.tertiary }]}>
               {tasks?.filter(t => !t.completed && t.priority === 'High').length || 0}
             </Text>
           </View>
           <View style={styles.gridCard}>
-            <FontAwesome5 name="check-circle" size={16} color="#2563eb" style={styles.gridIcon} />
+            <FontAwesome5 name="check-circle" size={16} color={colors.primary} style={styles.gridIcon} />
             <Text style={styles.gridLabel}>Completed</Text>
             <Text style={styles.gridValue}>{completedTasks}</Text>
           </View>
@@ -96,10 +101,10 @@ export default function DashboardScreen() {
               const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               
               const isHigh = task.priority === 'High';
-              const priorityColor = isHigh ? '#dc2626' : (task.priority === 'Medium' ? '#2563eb' : '#6b7280');
+              const priorityColor = isHigh ? colors.error : (task.priority === 'Medium' ? colors.primary : colors.secondary);
 
               return (
-                <View key={task.id} style={styles.deadlineCard}>
+                <Pressable key={task.id} style={styles.deadlineCard} onPress={() => setSelectedTask(task)}>
                   <View style={styles.deadlineCardHeader}>
                     <View style={styles.priorityRow}>
                       <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
@@ -114,20 +119,25 @@ export default function DashboardScreen() {
                   )}
                   <View style={styles.deadlineCardFooter}>
                     <View style={styles.timeRow}>
-                      <FontAwesome5 name="calendar-alt" size={12} color="#6b7280" />
+                      <FontAwesome5 name="calendar-alt" size={12} color={colors.onSurfaceVariant} />
                       <Text style={styles.timeText}>{dateString}, {timeString}</Text>
                     </View>
                     <View style={styles.checkboxOutline} />
                   </View>
-                </View>
+                </Pressable>
               );
           })}
           
           {(!tasks || tasks.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) >= new Date()).length === 0) && (
-            <Text style={{ color: '#6b7280', fontFamily: 'Inter_400Regular', marginTop: 8 }}>No upcoming deadlines.</Text>
+            <Text style={{ color: colors.onSurfaceVariant, fontFamily: 'Inter_400Regular', marginTop: 8 }}>No upcoming deadlines.</Text>
           )}
         </View>
       </ScrollView>
+
+      <TaskDetailsModal
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+      />
 
       <ConfirmModal
         visible={showLogoutConfirm}
@@ -141,8 +151,8 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f9fafb' },
+const createStyles = (colors: any) => StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
   container: { padding: 16, paddingBottom: 32 },
   header: {
     flexDirection: 'row',
@@ -153,7 +163,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'Inter_700Bold',
     fontSize: 18,
-    color: '#2563eb',
+    color: colors.primary,
   },
   greetingSection: {
     marginBottom: 20,
@@ -161,16 +171,16 @@ const styles = StyleSheet.create({
   greetingTitle: {
     fontFamily: 'Inter_700Bold',
     fontSize: 24,
-    color: '#111827',
+    color: colors.onSurface,
     marginBottom: 4,
   },
   greetingSubtitle: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
   },
   heroCard: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.primary,
     borderRadius: 16,
     padding: 24,
     marginBottom: 24,
@@ -178,19 +188,20 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: '#ffffff',
+    color: colors.onPrimary,
     marginBottom: 8,
   },
   heroPulse: {
     fontFamily: 'Inter_700Bold',
     fontSize: 32,
-    color: '#ffffff',
+    color: colors.onPrimary,
     marginBottom: 4,
   },
   heroSubtitle: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: '#e0e7ff',
+    color: colors.onPrimary,
+    opacity: 0.9,
     marginBottom: 16,
   },
   heroStatsRow: {
@@ -203,7 +214,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#ffffff',
+    borderColor: colors.onPrimary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -213,19 +224,20 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#60a5fa',
+    borderColor: colors.onPrimary,
+    opacity: 0.6,
     alignItems: 'center',
     justifyContent: 'center',
   },
   heroStatValue: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: '#ffffff',
+    color: colors.onPrimary,
   },
   heroStatValueOutline: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: '#ffffff',
+    color: colors.onPrimary,
   },
   heroStatsLabelRow: {
     flexDirection: 'row',
@@ -237,14 +249,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: '#ffffff',
+    color: colors.onPrimary,
   },
   heroStatLabelOutline: {
     width: 48,
     textAlign: 'center',
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: '#e0e7ff',
+    color: colors.onPrimary,
+    opacity: 0.8,
   },
   grid: {
     flexDirection: 'row',
@@ -255,11 +268,11 @@ const styles = StyleSheet.create({
   gridCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.outline,
   },
   gridIcon: {
     marginBottom: 12,
@@ -267,13 +280,13 @@ const styles = StyleSheet.create({
   gridLabel: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
     marginBottom: 4,
   },
   gridValue: {
     fontFamily: 'Inter_700Bold',
     fontSize: 18,
-    color: '#111827',
+    color: colors.onSurface,
   },
   deadlinesSection: {
     gap: 12,
@@ -287,19 +300,19 @@ const styles = StyleSheet.create({
   deadlinesTitle: {
     fontFamily: 'Inter_700Bold',
     fontSize: 18,
-    color: '#111827',
+    color: colors.onSurface,
   },
   viewAll: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: '#2563eb',
+    color: colors.primary,
   },
   deadlineCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.outline,
   },
   deadlineCardHeader: {
     flexDirection: 'row',
@@ -324,13 +337,13 @@ const styles = StyleSheet.create({
   deadlineTaskTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: '#111827',
+    color: colors.onSurface,
     marginBottom: 4,
   },
   deadlineTaskDesc: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
     marginBottom: 16,
     lineHeight: 20,
   },
@@ -339,7 +352,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.outline,
     paddingTop: 12,
   },
   timeRow: {
@@ -350,13 +363,13 @@ const styles = StyleSheet.create({
   timeText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
   },
   checkboxOutline: {
     width: 20,
     height: 20,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.outline,
   },
 });

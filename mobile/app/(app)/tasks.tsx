@@ -14,6 +14,7 @@ import {
 import { FontAwesome5 } from '@expo/vector-icons';
 import { AddTaskModal } from '../../components/AddTaskModal';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { TaskDetailsModal } from '../../components/TaskDetailsModal';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -24,13 +25,16 @@ import { LoadingState } from '../../components/LoadingState';
 import { TaskItem } from '../../components/TaskItem';
 import { useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../../lib/hooks/useTasks';
 import { useAuthSession } from '../../lib/AuthProvider';
+import { useTheme } from '../../lib/ThemeContext';
 import { Task } from '../../types/api';
 
 export default function TasksScreen() {
   const { signOut } = useAuthSession();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const tasksQuery = useTasks();
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
@@ -53,18 +57,11 @@ export default function TasksScreen() {
     });
   };
 
-  const handleDeleteTask = (task: Task) => {
-    setTaskToDelete(task);
-  };
-
-  const confirmDelete = async () => {
-    if (!taskToDelete) return;
+  const handleDeleteTask = async (task: Task) => {
     try {
-      await deleteTaskMutation.mutateAsync(taskToDelete.id);
+      await deleteTaskMutation.mutateAsync(task.id);
     } catch {
-      // error is surfaced via deleteTaskMutation.error in the footer
-    } finally {
-      setTaskToDelete(null);
+      // error is surfaced via deleteTaskMutation.error
     }
   };
 
@@ -147,10 +144,9 @@ export default function TasksScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <FontAwesome5 name="bars" size={20} color="#2563eb" />
         <Text style={styles.headerTitle}>Task Tracker</Text>
         <Pressable onPress={() => setShowLogoutConfirm(true)}>
-          <FontAwesome5 name="user-circle" size={24} color="#2563eb" />
+          <FontAwesome5 name="user-circle" size={24} color={colors.primary} />
         </Pressable>
       </View>
 
@@ -173,6 +169,7 @@ export default function TasksScreen() {
                 task={item}
                 onToggle={handleToggleTask}
                 onDelete={handleDeleteTask}
+                onPress={(task) => setSelectedTask(task)}
                 disabled={updateTaskMutation.isPending || deleteTaskMutation.isPending}
               />
             )}
@@ -181,7 +178,7 @@ export default function TasksScreen() {
       </View>
 
       <Pressable style={styles.fab} onPress={() => setShowAddModal(true)}>
-        <FontAwesome5 name="plus" size={20} color="#ffffff" />
+        <FontAwesome5 name="plus" size={20} color={colors.onPrimary} />
       </Pressable>
 
       <AddTaskModal
@@ -191,14 +188,9 @@ export default function TasksScreen() {
         onSubmit={handleAddTask}
       />
 
-      <ConfirmModal
-        visible={taskToDelete !== null}
-        title="Delete task"
-        message="Are you sure you want to delete this task? This action cannot be undone."
-        confirmLabel="Delete"
-        loading={deleteTaskMutation.isPending}
-        onConfirm={confirmDelete}
-        onCancel={() => setTaskToDelete(null)}
+      <TaskDetailsModal
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
       />
 
       <ConfirmModal
@@ -213,8 +205,8 @@ export default function TasksScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f9fafb' },
+const createStyles = (colors: any) => StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -222,19 +214,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.outline,
   },
   headerTitle: {
     fontFamily: 'Inter_700Bold',
     fontSize: 18,
-    color: '#2563eb',
+    color: colors.primary,
   },
   sectionTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
     marginBottom: 12,
     marginTop: 8,
     paddingHorizontal: 16,
@@ -247,10 +239,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2563eb',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

@@ -1,8 +1,9 @@
 import { Modal, Pressable, StyleSheet, Text, TextInput, View, ScrollView, Platform } from 'react-native';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { FontAwesome5 } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PrimaryButton } from './PrimaryButton';
+import { useTheme } from '../lib/ThemeContext';
 
 interface AddTaskModalProps {
   visible: boolean;
@@ -12,6 +13,8 @@ interface AddTaskModalProps {
 }
 
 export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: AddTaskModalProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
@@ -53,11 +56,11 @@ export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: Ad
         <View style={styles.container}>
           <View style={styles.header}>
             <Pressable onPress={onClose} style={styles.closeButton}>
-              <FontAwesome5 name="times" size={16} color="#6b7280" />
+              <FontAwesome5 name="times" size={16} color={colors.onSurfaceVariant} />
               <Text style={styles.closeText}>Cancel</Text>
             </Pressable>
             <Text style={styles.heading}>New Task</Text>
-            <View style={{ width: 60 }} /> {/* Spacer to balance header */}
+            <View style={{ width: 60 }} />
           </View>
           
           <ScrollView style={styles.form}>
@@ -66,7 +69,7 @@ export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: Ad
               value={title}
               onChangeText={setTitle}
               placeholder="e.g., Prepare Q3 Report"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.onSurfaceVariant}
               style={styles.input}
             />
 
@@ -75,7 +78,7 @@ export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: Ad
               value={description}
               onChangeText={setDescription}
               placeholder="Add details or context..."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.onSurfaceVariant}
               multiline
               style={[styles.input, styles.textArea]}
             />
@@ -83,7 +86,7 @@ export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: Ad
             <Text style={styles.label}>Set Deadline</Text>
             {Platform.OS === 'web' ? (
               <View style={styles.row}>
-                {/* @ts-ignore: HTML inputs for Expo Web */}
+                
                 <input
                   type="date"
                   value={dueDate.toLocaleDateString('en-CA')} // YYYY-MM-DD
@@ -101,13 +104,14 @@ export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: Ad
                     padding: 12,
                     borderRadius: 8,
                     borderWidth: 1,
-                    borderColor: '#d1d5db',
+                    borderColor: colors.outline,
+                    backgroundColor: colors.surface,
                     fontFamily: 'Inter_400Regular',
                     fontSize: 14,
-                    color: '#111827',
+                    color: colors.onSurface,
                   }}
                 />
-                {/* @ts-ignore: HTML inputs for Expo Web */}
+                
                 <input
                   type="time"
                   value={dueDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} // HH:mm
@@ -125,10 +129,11 @@ export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: Ad
                     padding: 12,
                     borderRadius: 8,
                     borderWidth: 1,
-                    borderColor: '#d1d5db',
+                    borderColor: colors.outline,
+                    backgroundColor: colors.surface,
                     fontFamily: 'Inter_400Regular',
                     fontSize: 14,
-                    color: '#111827',
+                    color: colors.onSurface,
                   }}
                 />
               </View>
@@ -136,13 +141,13 @@ export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: Ad
               <>
                 <View style={styles.row}>
                   <Pressable style={styles.dateInputWrapper} onPress={() => setShowDatePicker(true)}>
-                    <FontAwesome5 name="calendar" size={14} color="#6b7280" style={styles.inputIcon} />
+                    <FontAwesome5 name="calendar" size={14} color={colors.onSurfaceVariant} style={styles.inputIcon} />
                     <Text style={styles.mockInputText}>
                       {dueDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                     </Text>
                   </Pressable>
                   <Pressable style={styles.dateInputWrapper} onPress={() => setShowTimePicker(true)}>
-                    <FontAwesome5 name="clock" size={14} color="#6b7280" style={styles.inputIcon} />
+                    <FontAwesome5 name="clock" size={14} color={colors.onSurfaceVariant} style={styles.inputIcon} />
                     <Text style={styles.mockInputText}>
                       {dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </Text>
@@ -175,7 +180,7 @@ export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: Ad
                   style={[styles.priorityPill, priority === p && styles.priorityPillActive]}
                   onPress={() => setPriority(p)}
                 >
-                  {priority === p && <FontAwesome5 name="check" size={12} color="#ffffff" style={{ marginRight: 6 }} />}
+                  {priority === p && <FontAwesome5 name="check" size={12} color={colors.onPrimary} style={{ marginRight: 6 }} />}
                   <Text style={[styles.priorityText, priority === p && styles.priorityTextActive]}>{p}</Text>
                 </Pressable>
               ))}
@@ -191,14 +196,14 @@ export function AddTaskModal({ visible, loading = false, onClose, onSubmit }: Ad
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(17, 17, 17, 0.35)',
+    backgroundColor: colors.scrim,
     justifyContent: 'flex-end',
   },
   container: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     height: '80%',
@@ -210,7 +215,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.outline,
   },
   closeButton: {
     flexDirection: 'row',
@@ -221,12 +226,12 @@ const styles = StyleSheet.create({
   closeText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
   },
   heading: {
     fontSize: 18,
     fontFamily: 'Inter_700Bold',
-    color: '#111827',
+    color: colors.onSurface,
   },
   form: {
     padding: 16,
@@ -234,16 +239,17 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 14,
-    color: '#111827',
+    color: colors.onSurface,
     marginBottom: 8,
     marginTop: 16,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.outline,
+    backgroundColor: colors.surface,
     borderRadius: 8,
     padding: 12,
-    color: '#111827',
+    color: colors.onSurface,
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
   },
@@ -260,7 +266,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.outline,
+    backgroundColor: colors.surface,
     borderRadius: 8,
     padding: 12,
   },
@@ -270,7 +277,7 @@ const styles = StyleSheet.create({
   mockInputText: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
   },
   priorityRow: {
     flexDirection: 'row',
@@ -284,25 +291,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.outline,
     borderRadius: 100,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
   },
   priorityPillActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   priorityText: {
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    color: '#111827',
+    color: colors.onSurface,
   },
   priorityTextActive: {
-    color: '#ffffff',
+    color: colors.onPrimary,
   },
   footer: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.outline,
   },
 });

@@ -1,5 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
 import { PrimaryButton } from './PrimaryButton';
+import { useTheme } from '../lib/ThemeContext';
 
 interface ConfirmModalProps {
   visible: boolean;
@@ -22,6 +24,9 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.overlay} onPress={loading ? undefined : onCancel}>
@@ -45,15 +50,15 @@ export function ConfirmModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(17, 17, 17, 0.35)',
+    backgroundColor: colors.scrim,
     justifyContent: 'center',
     padding: 24,
   },
   container: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     gap: 12,
@@ -69,26 +74,26 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.errorContainer,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: colors.errorContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconText: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#dc2626',
+    color: colors.error,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111111',
+    color: colors.onSurface,
     textAlign: 'center',
   },
   message: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 20,
   },

@@ -1,5 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, Animated } from 'react-native';
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
+import { useTheme } from '../lib/ThemeContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -18,6 +19,8 @@ export function PrimaryButton({
   disabled = false,
   variant = 'primary',
 }: PrimaryButtonProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isDisabled = disabled || loading;
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -49,7 +52,7 @@ export function PrimaryButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'secondary' ? '#2563eb' : '#ffffff'} />
+        <ActivityIndicator color={variant === 'secondary' ? colors.primary : colors.onPrimary} />
       ) : (
         <Text style={[styles.text, variant === 'secondary' && styles.secondaryText]}>{title}</Text>
       )}
@@ -57,7 +60,7 @@ export function PrimaryButton({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   button: {
     borderRadius: 8,
     paddingVertical: 12,
@@ -66,22 +69,22 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   primary: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.primary,
   },
   secondary: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.outline,
   },
   disabled: {
     opacity: 0.6,
   },
   text: {
-    color: '#ffffff',
+    color: colors.onPrimary,
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
   },
   secondaryText: {
-    color: '#111827',
+    color: colors.onSurface,
   },
 });

@@ -1,12 +1,14 @@
 import { Redirect, Tabs } from 'expo-router';
 import { LoadingState } from '../../components/LoadingState';
 import { useAuthSession } from '../../lib/AuthProvider';
+import { useTheme } from '../../lib/ThemeContext';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { View } from 'react-native';
 
 export default function AppLayout() {
   const { status } = useAuthSession();
+  const { colors } = useTheme();
   
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -28,15 +30,15 @@ export default function AppLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#e5e7eb',
+          borderTopColor: colors.outline,
           height: 64,
           paddingBottom: 8,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#2563eb',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.onSurfaceVariant,
         tabBarLabelStyle: {
           fontFamily: 'Inter_600SemiBold',
           fontSize: 12,
@@ -49,14 +51,14 @@ export default function AppLayout() {
           title: 'Home',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{
-              backgroundColor: focused ? '#2563eb' : 'transparent',
+              backgroundColor: focused ? colors.primary : 'transparent',
               padding: 8,
               borderRadius: 8,
             }}>
-              <FontAwesome5 name="border-all" size={size} color={focused ? '#ffffff' : color} />
+              <FontAwesome5 name="border-all" size={size} color={focused ? colors.onPrimary : color} />
             </View>
           ),
-          tabBarLabel: ({ focused, color }) => focused ? null : <></>, // Hide label if focused to match mockup, actually let's just keep standard labels for now, or match mockup precisely
+          tabBarLabel: ({ focused, color }) => focused ? null : <></>, 
         }}
       />
       <Tabs.Screen
@@ -64,13 +66,6 @@ export default function AppLayout() {
         options={{
           title: 'Tasks',
           tabBarIcon: ({ color, size }) => <FontAwesome5 name="check-double" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="calendar"
-        options={{
-          title: 'Calendar',
-          tabBarIcon: ({ color, size }) => <FontAwesome5 name="calendar" size={size} color={color} />,
         }}
       />
       <Tabs.Screen

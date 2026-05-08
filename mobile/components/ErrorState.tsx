@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
 import { PrimaryButton } from './PrimaryButton';
+import { useTheme } from '../lib/ThemeContext';
 
 interface ErrorStateProps {
   message?: string;
@@ -7,6 +9,9 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({ message, onRetry }: ErrorStateProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Something went wrong</Text>
@@ -16,23 +21,23 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
     gap: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.background,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111111',
+    color: colors.onSurface,
   },
   message: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
     marginBottom: 8,
   },

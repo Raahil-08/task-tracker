@@ -1,6 +1,7 @@
 import { Link, router } from 'expo-router';
 import { KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useTheme } from '../../lib/ThemeContext';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { useLogin } from '../../lib/hooks/useAuth';
 import { useAuthSession } from '../../lib/AuthProvider';
@@ -8,6 +9,8 @@ import { useAuthSession } from '../../lib/AuthProvider';
 export default function LoginScreen() {
   const loginMutation = useLogin();
   const { signIn } = useAuthSession();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +42,7 @@ export default function LoginScreen() {
             placeholder="Email"
             keyboardType="email-address"
             autoCapitalize="none"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.onSurfaceVariant}
             style={styles.input}
           />
           <TextInput
@@ -47,7 +50,7 @@ export default function LoginScreen() {
             onChangeText={setPassword}
             placeholder="Password"
             secureTextEntry
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.onSurfaceVariant}
             style={styles.input}
           />
 
@@ -68,20 +71,21 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#ffffff' },
+const createStyles = (colors: any) => StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: 16 },
   content: { gap: 12 },
-  title: { color: '#111111', fontSize: 28, fontWeight: '700' },
-  subtitle: { color: '#6b7280', marginBottom: 4 },
+  title: { color: colors.onSurface, fontSize: 28, fontWeight: '700' },
+  subtitle: { color: colors.onSurfaceVariant, marginBottom: 4 },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.outline,
+    backgroundColor: colors.surface,
     borderRadius: 10,
     padding: 12,
-    color: '#111111',
+    color: colors.onSurface,
   },
-  error: { color: '#dc2626', fontSize: 13 },
-  footerText: { color: '#6b7280', textAlign: 'center', marginTop: 8 },
-  link: { color: '#2563eb', fontWeight: '600' },
+  error: { color: colors.error, fontSize: 13 },
+  footerText: { color: colors.onSurfaceVariant, textAlign: 'center', marginTop: 8 },
+  link: { color: colors.primary, fontWeight: '600' },
 });
