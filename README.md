@@ -4,7 +4,8 @@ A full-stack mobile application for tracking tasks and upcoming deadlines, built
 
 ## Demo Video
 
-![Task Tracker Demo](./Task%20Tracker.mov)
+<video src="./Task%20Tracker.mov" controls="controls" style="max-width: 600px;">
+</video>
 
 ## Setup & Installation
 
