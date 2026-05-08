@@ -1,10 +1,12 @@
+
+https://github.com/user-attachments/assets/e46669b5-5c21-4c9c-afbf-d20fdb091d74
 # Task Tracker
 
 A full-stack mobile application for tracking tasks and upcoming deadlines, built with React Native (Expo) and a Node.js Express backend.
 
 ## Demo Video
 
-<video src="./Task%20Tracker.mov" controls="controls" style="max-width: 600px;">
+<video src="https://github.com/user-attachments/assets/6b0c5685-8dcd-45ce-a239-e914d3c11b52" controls="controls" style="max-width: 600px;">
 </video>
 
 ## Setup & Installation
